@@ -101,6 +101,36 @@ instance.prototype.actions = function(system) {
 					default: 1
 				}
 			]
+		},
+		'timer_set': {
+			label: 'Set timer time',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				},
+				{
+					type: 'textinput',
+					label: 'hour',
+					id: 'timerHour',
+					default: 1
+				},
+				{
+					type: 'textinput',
+					label: 'hour',
+					id: 'timerMinute',
+					default: 1
+				},
+				{
+					type: 'textinput',
+					label: 'hour',
+					id: 'timerSecond',
+					default: 1
+				}
+			]
 		}
 	});
 }
@@ -120,6 +150,22 @@ instance.prototype.action = function(action) {
 				value: parseInt(action.options.timerIndex)
 		};
 		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/index", [ bol ] );
+	}
+
+	if (action.action == 'timer_set') {
+		var bol1 = {
+				type: "i",
+				value: parseInt(action.options.timerHour)
+		};
+		var bol2 = {
+				type: "i",
+				value: parseInt(action.options.timerMinute)
+		};
+		var bol3 = {
+				type: "i",
+				value: parseInt(action.options.timerSecond)
+		};
+		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/time", [ bol1, bol2, bol3 ] );
 	}
 };
 
