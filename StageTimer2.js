@@ -116,19 +116,21 @@ instance.prototype.actions = function(system) {
 					type: 'textinput',
 					label: 'hour',
 					id: 'timerHour',
-					default: 1
+					default: 0
 				},
 				{
 					type: 'textinput',
-					label: 'hour',
+					label: 'minute',
 					id: 'timerMinute',
-					default: 1
+					default: 15,
+					regex: '/^[1-5]?[0-9]$/'
 				},
 				{
 					type: 'textinput',
-					label: 'hour',
+					label: 'second',
 					id: 'timerSecond',
-					default: 1
+					default: 0,
+					regex: '/^[1-5]?[0-9]$/'
 				}
 			]
 		}
