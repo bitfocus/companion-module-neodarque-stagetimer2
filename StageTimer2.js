@@ -55,8 +55,12 @@ instance.prototype.CHOICES_BASIC = [
 	{ label: 'reset', id: 'reset' },
 	{ label: 'enable', id: 'enable' },
 	{ label: 'disable', id: 'disable' },
-	{ label: 'next', id: 'next' },
-	{ label: 'previous', id: 'previous' }
+	{ label: 'next', id: 'entry/next' },
+	{ label: 'previous', id: 'entry/previous' }
+];
+instance.prototype.CHOICES_TIMERNUMBER = [
+	{ label: '1', id: '1' },
+	{ label: '2', id: '2' }
 ];
 instance.prototype.actions = function(system) {
 	var self = this;
@@ -68,7 +72,8 @@ instance.prototype.actions = function(system) {
 					type: 'dropdown',
 					label: 'Timer #',
 					id: 'timerNumber',
-					default: '1'
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
 				},
 				{
 					type: 'dropdown',
@@ -78,72 +83,25 @@ instance.prototype.actions = function(system) {
 					choices: self.CHOICES_BASIC
 				}
 			]
-		}
-		'send_blank': {
-			label: 'Send message',
-			options: [
-				{
-					 type: 'textinput',
-					 label: 'OSC Path',
-					 id: 'path',
-					 default: '/osc/path'
-				}
-			]
 		},
-		'send_int': {
-			label: 'Send integer',
+		'timer_index': {
+			label: 'Set timer entry to timer',
 			options: [
 				{
-					 type: 'textinput',
-					 label: 'OSC Path',
-					 id: 'path',
-					 default: '/osc/path'
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
 				},
 				{
-					 type: 'textinput',
-					 label: 'Value',
-					 id: 'int',
-					 default: 1,
-					 regex: self.REGEX_SIGNED_NUMBER
-				}
-			]
-		},
-		'send_float': {
-			label: 'Send float',
-			options: [
-				{
-					 type: 'textinput',
-					 label: 'OSC Path',
-					 id: 'path',
-					 default: '/osc/path'
-				},
-				{
-					 type: 'textinput',
-					 label: 'Value',
-					 id: 'float',
-					 default: 1,
-					 regex: self.REGEX_SIGNED_FLOAT
-				}
-			]
-		},
-		'send_string': {
-			label: 'Send string',
-			options: [
-				{
-					 type: 'textinput',
-					 label: 'OSC Path',
-					 id: 'path',
-					 default: '/osc/path'
-				},
-				{
-					 type: 'textinput',
-					 label: 'Value',
-					 id: 'string',
-					 default: "text"
+					type: 'textinput',
+					label: 'index #',
+					id: 'timerIndex',
+					default: 1
 				}
 			]
 		}
-
 	});
 }
 
@@ -152,35 +110,17 @@ instance.prototype.action = function(action) {
 
 	debug('action: ', action);
 
-	if (action.action == 'send_blank') {
-		debug('sending',self.config.host, self.config.port, action.options.path);
-		self.system.emit('osc_send', self.config.host, self.config.port, action.options.path, [])
+	if (action.action == 'basic_command') {
+		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/" + action.options.timerCommand, []);
 	}
 
-	if (action.action == 'send_int') {
+	if (action.action == 'timer_index') {
 		var bol = {
 				type: "i",
-				value: parseInt(action.options.int)
+				value: parseInt(action.options.timerIndex)
 		};
-		self.system.emit('osc_send', self.config.host, self.config.port, action.options.path, [ bol ]);
+		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/index", [ bol ] );
 	}
-
-	if (action.action == 'send_float') {
-		var bol = {
-				type: "f",
-				value: parseFloat(action.options.float)
-		};
-		self.system.emit('osc_send', self.config.host, self.config.port, action.options.path, [ bol ]);
-	}
-
-	if (action.action == 'send_string') {
-		var bol = {
-				type: "s",
-				value: "" + action.options.string
-		};
-		self.system.emit('osc_send', self.config.host, self.config.port, action.options.path, [ bol ]);
-	}
-
 };
 
 instance_skel.extendedBy(instance);
