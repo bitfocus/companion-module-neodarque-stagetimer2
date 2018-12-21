@@ -85,7 +85,7 @@ instance.prototype.actions = function(system) {
 			]
 		},
 		'timer_index': {
-			label: 'Set timer entry to timer',
+			label: 'Set timer entry to timer on index',
 			options: [
 				{
 					type: 'dropdown',
@@ -114,23 +114,9 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'hour',
-					id: 'timerHour',
-					default: 0
-				},
-				{
-					type: 'textinput',
-					label: 'minute',
-					id: 'timerMinute',
-					default: 15,
-					regex: '/^[1-5]?[0-9]$/'
-				},
-				{
-					type: 'textinput',
-					label: 'second',
-					id: 'timerSecond',
-					default: 0,
-					regex: '/^[1-5]?[0-9]$/'
+					label: 'Time',
+					id: 'timeGO',
+					regex: '/^(\\d+:)?(\\d+:)?\\d+$/'
 				}
 			]
 		}
@@ -155,19 +141,57 @@ instance.prototype.action = function(action) {
 	}
 
 	if (action.action == 'timer_set') {
-		var bol1 = {
-				type: "i",
-				value: parseInt(action.options.timerHour)
+		var input = action.options.timeGO;
+		var match;
+		var h = {
+			type: "i",
+			value: 0
 		};
-		var bol2 = {
-				type: "i",
-				value: parseInt(action.options.timerMinute)
+		var m = {
+			type: "i",
+			value: 0
 		};
-		var bol3 = {
-				type: "i",
-				value: parseInt(action.options.timerSecond)
+		var s = {
+			type: "i",
+			value: 0
 		};
-		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/time", [ bol1, bol2, bol3 ] );
+
+		if (match = input.match(/^(\d+)$/)) {
+			s = {
+				type: "i",
+				value: parseInt(match[1])
+			};
+
+		}
+		else if (match = input.match(/^(\d+):(\d+)$/)) {
+			m = {
+				type: "i",
+				value: parseInt(match[1])
+			};
+			s = {
+				type: "i",
+				value: parseInt(match[2])
+			};
+
+		}
+		else if (match = input.match(/^(\d+):(\d+):(\d+)$/)) {
+			h = {
+				type: "i",
+				value: parseInt(match[1])
+			};
+			m = {
+				type: "i",
+				value: parseInt(match[2])
+			};
+			s = {
+				type: "i",
+				value: parseInt(match[3])
+			};
+
+		}
+
+		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/time", [ h, m, s ] );
+
 	}
 };
 
