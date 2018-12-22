@@ -1,16 +1,24 @@
 {
-  "name": "stagetimer2",
-  "version": "1.0.0",
-  "keywords": [ "Timer", "Clock", "StageTimer" ],
-	"manufacturer": "Neodarque",
-	"product": [ "StageTimer2" ],
-	"shortname": "StageTimer2",
-	"homepage": "",
-	"description": "module for StageTimer2",
+  "name": "neodarque-stagetimer2",
+  "version": "1.0.1",
+  "keywords": [
+    "Timing",
+    "Clock"
+  ],
+  "manufacturer": "Neodarque",
+  "product": [
+    "StageTimer2"
+  ],
+  "shortname": "stagetimer",
+  "homepage": "",
+  "description": "module for StageTimer2",
   "main": "stagetimer2.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jeffrey Davidsz <jeffrey.davidsz@vicreo.eu>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "xml2js": "^0.4.19"
+  }
 }
