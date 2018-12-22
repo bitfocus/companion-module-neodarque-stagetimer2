@@ -1,23 +1,28 @@
+var tcp = require('../../tcp');
 var instance_skel = require('../../instance_skel');
+var parseString = require('xml2js').parseString;
 var debug;
 var log;
 
 function instance(system, id, config) {
-	var self = this;
 
-	// super-constructor
+	var self = this;
 	instance_skel.apply(this, arguments);
 
 	self.actions(); // export actions
+	self.timers = {};
+	self.timers['timer1'] = {};
+	self.timers['timer2'] = {};
 
 	return self;
 }
 
 instance.prototype.init = function() {
 	var self = this;
-
-	self.status(self.STATE_OK);
-
+	self.status(self.STATE_ERROR);
+	self.init_tcp();
+	self.init_variables();
+	self.init_feedbacks();
 	debug = self.debug;
 	log = self.log;
 };
@@ -30,24 +35,157 @@ instance.prototype.config_fields = function () {
 			type: 'textinput',
 			id: 'host',
 			label: 'Target IP',
-			width: 8,
+			width: 6,
+			default: '127.0.0.1',
 			regex: self.REGEX_IP
 		},
 		{
 			type: 'textinput',
 			id: 'port',
-			label: 'Target Port',
-			width: 4,
+			label: 'OSC Server Port',
+			width: 3,
+			default: '8001',
+			regex: self.REGEX_PORT
+		},
+		{
+			type: 'textinput',
+			id: 'port_display',
+			label: 'StageTimerDisplay Port',
+			width: 3,
+			default: '4870',
 			regex: self.REGEX_PORT
 		}
 	]
 };
 
+instance.prototype.init_variables = function() {
+	var self = this;
+
+	var variables = [
+		{ name: 'timer1_time', label: 'timer 1 current time' },
+		{ name: 'timer2_time', label: 'timer 2 current time' },
+		{ name: 'timer1_type', label: 'timer 1 type' },
+		{ name: 'timer2_type', label: 'timer 2 type' },
+		{ name: 'timer1_enabled', label: 'timer 1 state' },
+		{ name: 'timer2_enabled', label: 'timer 2 state' },
+		{ name: 'timer1_isonend', label: 'timer 1 ended' },
+		{ name: 'timer2_isonend', label: 'timer 2 ended' },
+		{ name: 'timer1_isonovertime', label: 'timer 1 ended' },
+		{ name: 'timer2_isonovertime', label: 'timer 2 ended' },
+		{ name: 'timer1_isrunning', label: 'timer 1 state' },
+		{ name: 'timer2_isrunning', label: 'timer 2 state' },
+		{ name: 'timer1_isonalert', label: 'timer 1 alert state' },
+		{ name: 'timer2_isonalert', label: 'timer 2 alert state' },
+	];
+
+	self.setVariableDefinitions(variables);
+
+};
+
+instance.prototype.init_tcp = function() {
+	var self = this;
+
+	if (self.socket !== undefined) {
+		self.socket.destroy();
+		delete self.socket;
+	}
+
+	if (self.config.host) {
+
+		self.socket = new tcp(self.config.host, self.config.port_display);
+
+		self.socket.on('status_change', function (status, message) {
+			self.status(status, message);
+		});
+
+		self.socket.on('error', function (err) {
+			debug("Network error", err);
+			self.status(self.STATE_ERROR, err);
+			self.log('error',"Network error: " + err.message);
+		});
+
+		self.socket.on('connect', function () {
+			self.status(self.STATE_OK);
+			debug("Connected");
+		})
+
+		self.socket.on('data', function (data) {
+			if (data !== undefined && data.toString().match(/Timers/)) {
+				var xml = data.toString();
+				parseString(xml, function (err, result) {
+					if (result !== undefined && result.Timers !== undefined && result.Timers.Timer !== undefined) {
+
+						var t = result.Timers.Timer;
+
+						var t1 = t[0]['$'];
+						var t2 = t[1]['$'];
+
+						self.setVariable('timer1_time', t1['CurrentTimeString'] );
+						self.setVariable('timer2_time', t2['CurrentTimeString'] );
+						self.setVariable('timer1_name', t1['Name'] );
+						self.setVariable('timer2_name', t2['Name'] );
+						self.setVariable('timer1_type', t1['TimerType'] );
+						self.setVariable('timer2_type', t2['TimerType'] );
+						self.setVariable('timer1_enabled', t1['IsEnabled'] );
+						self.setVariable('timer2_enabled', t2['IsEnabled'] );
+						self.setVariable('timer1_isonend', t1['IsOnEnd'] );
+						self.setVariable('timer2_isonend', t2['IsOnEnd'] );
+						self.setVariable('timer1_isonovertime', t1['IsOnOvertime'] );
+						self.setVariable('timer2_isonovertime', t2['IsOnOvertime'] );
+						self.setVariable('timer1_isrunning', t1['IsRunning'] );
+						self.setVariable('timer2_isrunning', t2['IsRunning'] );
+						self.setVariable('timer1_isonalert', t1['IsOnAlert'] );
+						self.setVariable('timer2_isonalert', t2['IsOnAlert'] );
+
+						self.timers['timer1'] = {
+							onend: t1['IsOnEnd'],
+							onovertime: t1['IsOnOvertime'],
+							onalert: t1['IsOnAlert'],
+							time: t1['CurrentTimeString'],
+							name: t1['Name'],
+							type: t1['TimerType'],
+							enabled: t1['IsEnabled'],
+							running: t1['IsRunning']
+						};
+
+						self.timers['timer2'] = {
+							onend: t2['IsOnEnd'],
+							onovertime: t2['IsOnOvertime'],
+							onalert: t2['IsOnAlert'],
+							time: t2['CurrentTimeString'],
+							name: t2['Name'],
+							type: t2['TimerType'],
+							enabled: t2['IsEnabled'],
+							running: t2['IsRunning']
+						};
+
+						self.checkFeedbacks('timer_enabled');
+						self.checkFeedbacks('timer_running');
+						self.checkFeedbacks('timer_onend');
+						self.checkFeedbacks('timer_onalert');
+						self.checkFeedbacks('timer_onovertime');
+
+					}
+
+				});
+			}
+		});
+	}
+};
+
 // When module gets deleted
 instance.prototype.destroy = function() {
 	var self = this;
-	debug("destroy");
+
+	if (self.socket !== undefined) {
+		self.socket.destroy();
+	}
 };
+
+instance.prototype.CHOICES_TIMERS = [
+	{ label: 'Timer 1', id: '1' },
+	{ label: 'Timer 2', id: '2' }
+];
 
 instance.prototype.CHOICES_BASIC = [
 	{ label: 'start', id: 'start' },
@@ -60,15 +198,17 @@ instance.prototype.CHOICES_BASIC = [
 	{ label: 'Enter fullscreen', id: 'fullscreen/enter' },
 	{ label: 'Exit fullscreen', id: 'fullscreen/exit' }
 ];
+
 instance.prototype.CHOICES_TIMERNUMBER = [
 	{ label: '1', id: '1' },
 	{ label: '2', id: '2' }
 ];
+
 instance.prototype.actions = function(system) {
 	var self = this;
 	self.system.emit('instance_actions', self.id, {
-		'basic_command': {
-			label: 'Basic commands',
+		'basic_start': {
+			label: 'Start timer',
 			options: [
 				{
 					type: 'dropdown',
@@ -76,22 +216,92 @@ instance.prototype.actions = function(system) {
 					id: 'timerNumber',
 					default: '1',
 					choices: self.CHOICES_TIMERNUMBER
-				},
-				{
-					type: 'dropdown',
-					label: 'command',
-					id: 'timerCommand',
-					default: 'start',
-					choices: self.CHOICES_BASIC
 				}
 			]
 		},
-		'timer_index': {
-			label: 'Set timer entry to timer on index',
+		'basic_stop': {
+			label: 'Stop timer',
 			options: [
 				{
 					type: 'dropdown',
 					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				}
+			]
+		},
+		'basic_reset': {
+			label: 'Reset timer',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				}
+			]
+		},
+
+		'basic_enable': {
+			label: 'Enable timer',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				}
+			]
+		},
+
+		'basic_disable': {
+			label: 'Disable timer',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				}
+			]
+		},
+
+		'basic_next': {
+			label: 'Next timer',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				}
+			]
+		},
+
+		'basic_previous': {
+			label: 'Previous timer',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				}
+			]
+		},
+
+		'timer_index': {
+			label: 'Load timer',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer number',
 					id: 'timerNumber',
 					default: '1',
 					choices: self.CHOICES_TIMERNUMBER
@@ -104,6 +314,7 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
+
 		'timer_set': {
 			label: 'Set timer time',
 			options: [
@@ -121,70 +332,235 @@ instance.prototype.actions = function(system) {
 					regex: '/^(\\d+:)?(\\d+:)?\\d+$/'
 				}
 			]
+		},
+
+		'timer_message': {
+			label: 'Set message',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Message',
+					id: 'message',
+					regex: '/^.+$/'
+				}
+			]
+		},
+
+		'timer_message_clear': {
+			label: 'Clear message',
+			options: []
+		},
+
+		'fullscreen_enter': {
+			label: 'Enter fullscreen',
+			options: []
+		},
+
+		'fullscreen_leave': {
+			label: 'Leave fullscreen',
+			options: []
 		}
+
 	});
 }
 
-instance.prototype.action = function(action) {
+
+instance.prototype.init_feedbacks = function() {
+
+	var self = this;
+	var feedbacks = {};
+
+	feedbacks['timer_enabled'] = {
+		label: 'Change colors on alert time',
+		description: 'Change colors on alert time',
+		options: [
+			{ type: 'colorpicker', label: 'Foreground color',	id: 'fg', default: self.rgb(255,255,255) },
+			{ type: 'colorpicker', label: 'Background color', id: 'bg', default: self.rgb(0,255,0) },
+			{ type: 'dropdown', label: 'Timer', id: 'timer', default: 1, choices: self.CHOICES_TIMERS }
+		]
+	};
+
+	feedbacks['timer_running'] = {
+		label: 'Change colors on timer running',
+		description: 'Change colors on timer running',
+		options: [
+			{ type: 'colorpicker', label: 'Foreground color',	id: 'fg', default: self.rgb(255,255,255) },
+			{ type: 'colorpicker', label: 'Background color', id: 'bg', default: self.rgb(0,255,0) },
+			{ type: 'dropdown', label: 'Timer', id: 'timer', default: 1, choices: self.CHOICES_TIMERS }
+		]
+	};
+
+	feedbacks['timer_onovertime'] = {
+		label: 'Change colors on overtime',
+		description: 'Change colors on overtime',
+		options: [
+			{ type: 'colorpicker', label: 'Foreground color',	id: 'fg', default: self.rgb(255,255,255) },
+			{ type: 'colorpicker', label: 'Background color', id: 'bg', default: self.rgb(255,0,0) },
+			{ type: 'dropdown', label: 'Timer', id: 'timer', default: 1, choices: self.CHOICES_TIMERS }
+		]
+	};
+
+	feedbacks['timer_onend'] = {
+		label: 'Change colors on timer end',
+		description: 'Change colors on timer end',
+		options: [
+			{ type: 'colorpicker', label: 'Foreground color',	id: 'fg', default: self.rgb(255,255,255) },
+			{ type: 'colorpicker', label: 'Background color', id: 'bg', default: self.rgb(255,0,0) },
+			{ type: 'dropdown', label: 'Timer', id: 'timer', default: 1, choices: self.CHOICES_TIMERS }
+		]
+	};
+
+	feedbacks['timer_onalert'] = {
+		label: 'Change colors on alert time',
+		description: 'Change colors on alert time',
+		options: [
+			{ type: 'colorpicker', label: 'Foreground color',	id: 'fg', default: self.rgb(255,255,255) },
+			{ type: 'colorpicker', label: 'Background color', id: 'bg', default: self.rgb(255,100,0) },
+			{ type: 'dropdown', label: 'Timer', id: 'timer', default: 1, choices: self.CHOICES_TIMERS }
+		]
+	};
+
+	self.setFeedbackDefinitions(feedbacks);
+};
+
+instance.prototype.feedback = function(feedback, bank) {
+
 	var self = this;
 
-	debug('action: ', action);
-
-	if (action.action == 'basic_command') {
-		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/" + action.options.timerCommand, []);
+	if (feedback.type == 'timer_enabled') {
+		if (self.timers['timer' + feedback.options.timer] !== undefined && self.timers['timer' + feedback.options.timer].enabled === 'True') {
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
+		}
 	}
 
-	if (action.action == 'timer_index') {
+	if (feedback.type == 'timer_running') {
+		if (self.timers['timer' + feedback.options.timer] !== undefined && self.timers['timer' + feedback.options.timer].running === 'True') {
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
+		}
+	}
+
+	if (feedback.type == 'timer_onovertime') {
+		if (self.timers['timer' + feedback.options.timer] !== undefined && self.timers['timer' + feedback.options.timer].onovertime === 'True') {
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
+		}
+	}
+
+	if (feedback.type == 'timer_onend') {
+		if (self.timers['timer' + feedback.options.timer] !== undefined && self.timers['timer' + feedback.options.timer].onend === 'True') {
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
+		}
+	}
+
+	if (feedback.type == 'timer_onalert') {
+		if (self.timers['timer' + feedback.options.timer] !== undefined && self.timers['timer' + feedback.options.timer].onalert === 'True') {
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
+		}
+	}
+
+};
+
+instance.prototype.action = function(action) {
+
+	var self = this;
+	var m;
+
+	if (action.action === 'timer_message') {
+
+		self.system.emit('osc_send', self.config.host, self.config.port, "/message", [ {
+			type: "s",
+			value: action.options.message
+		} ] );
+
+	}
+
+	else if (action.action === 'timer_message_clear') {
+		self.system.emit('osc_send', self.config.host, self.config.port, "/message/clear", [ ] );
+	}
+
+	else if (action.action === 'fullscreen_enter') {
+		debug("enter fullscreen");
+		self.system.emit('osc_send', self.config.host, self.config.port, "/fullscreen/enter", [ ] );
+	}
+
+	else if (action.action === 'fullscreen_leave') {
+		debug("exit fullscreen");
+		self.system.emit('osc_send', self.config.host, self.config.port, "/fullscreen/exit", [ ] );
+	}
+
+	else if (m = action.action.match(/^basic_([a-z]+)$/)) {
+		for (var n in self.CHOICES_BASIC) {
+			if (self.CHOICES_BASIC[n].label === m[1]) {
+				self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/" + self.CHOICES_BASIC[n].id, []);
+			}
+		}
+	}
+
+	else if (action.action == 'timer_index') {
+
 		var bol = {
 				type: "i",
 				value: parseInt(action.options.timerIndex)
 		};
+
 		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/index", [ bol ] );
+
 	}
 
-	if (action.action == 'timer_set') {
+	else if (action.action == 'timer_set') {
+
 		var input = action.options.timeGO;
 		var match;
+
 		var h = {
 			type: "i",
 			value: 0
 		};
+
 		var m = {
 			type: "i",
 			value: 0
 		};
+
 		var s = {
 			type: "i",
 			value: 0
 		};
 
 		if (match = input.match(/^(\d+)$/)) {
+
 			s = {
 				type: "i",
 				value: parseInt(match[1])
 			};
 
 		}
+
 		else if (match = input.match(/^(\d+):(\d+)$/)) {
+
 			m = {
 				type: "i",
 				value: parseInt(match[1])
 			};
+
 			s = {
 				type: "i",
 				value: parseInt(match[2])
 			};
 
 		}
+
 		else if (match = input.match(/^(\d+):(\d+):(\d+)$/)) {
+
 			h = {
 				type: "i",
 				value: parseInt(match[1])
 			};
+
 			m = {
 				type: "i",
 				value: parseInt(match[2])
 			};
+
 			s = {
 				type: "i",
 				value: parseInt(match[3])
