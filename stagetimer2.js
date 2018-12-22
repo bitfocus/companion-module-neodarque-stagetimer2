@@ -349,6 +349,16 @@ instance.prototype.actions = function(system) {
 		'timer_message_clear': {
 			label: 'Clear message',
 			options: []
+		},
+
+		'fullscreen_enter': {
+			label: 'Enter fullscreen',
+			options: []
+		},
+
+		'fullscreen_leave': {
+			label: 'Leave fullscreen',
+			options: []
 		}
 
 	});
@@ -456,17 +466,25 @@ instance.prototype.action = function(action) {
 
 	if (action.action === 'timer_message') {
 
-		var bol = {
+		self.system.emit('osc_send', self.config.host, self.config.port, "/message", [ {
 			type: "s",
 			value: action.options.message
-		};
-
-		self.system.emit('osc_send', self.config.host, self.config.port, "/message", [ bol ] );
+		} ] );
 
 	}
 
 	else if (action.action === 'timer_message_clear') {
 		self.system.emit('osc_send', self.config.host, self.config.port, "/message/clear", [ ] );
+	}
+
+	else if (action.action === 'fullscreen_enter') {
+		debug("enter fullscreen");
+		self.system.emit('osc_send', self.config.host, self.config.port, "/fullscreen/enter", [ ] );
+	}
+
+	else if (action.action === 'fullscreen_leave') {
+		debug("exit fullscreen");
+		self.system.emit('osc_send', self.config.host, self.config.port, "/fullscreen/exit", [ ] );
 	}
 
 	else if (m = action.action.match(/^basic_([a-z]+)$/)) {
@@ -478,60 +496,76 @@ instance.prototype.action = function(action) {
 	}
 
 	else if (action.action == 'timer_index') {
+
 		var bol = {
 				type: "i",
 				value: parseInt(action.options.timerIndex)
 		};
+
 		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/index", [ bol ] );
+
 	}
 
 	else if (action.action == 'timer_set') {
+
 		var input = action.options.timeGO;
 		var match;
+
 		var h = {
 			type: "i",
 			value: 0
 		};
+
 		var m = {
 			type: "i",
 			value: 0
 		};
+
 		var s = {
 			type: "i",
 			value: 0
 		};
 
 		if (match = input.match(/^(\d+)$/)) {
+
 			s = {
 				type: "i",
 				value: parseInt(match[1])
 			};
+
 		}
 
 		else if (match = input.match(/^(\d+):(\d+)$/)) {
+
 			m = {
 				type: "i",
 				value: parseInt(match[1])
 			};
+
 			s = {
 				type: "i",
 				value: parseInt(match[2])
 			};
+
 		}
 
 		else if (match = input.match(/^(\d+):(\d+):(\d+)$/)) {
+
 			h = {
 				type: "i",
 				value: parseInt(match[1])
 			};
+
 			m = {
 				type: "i",
 				value: parseInt(match[2])
 			};
+
 			s = {
 				type: "i",
 				value: parseInt(match[3])
 			};
+
 		}
 
 		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/time", [ h, m, s ] );
