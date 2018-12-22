@@ -56,7 +56,9 @@ instance.prototype.CHOICES_BASIC = [
 	{ label: 'enable', id: 'enable' },
 	{ label: 'disable', id: 'disable' },
 	{ label: 'next', id: 'entry/next' },
-	{ label: 'previous', id: 'entry/previous' }
+	{ label: 'previous', id: 'entry/previous' },
+	{ label: 'Enter fullscreen', id: 'fullscreen/enter' },
+	{ label: 'Exit fullscreen', id: 'fullscreen/exit' }
 ];
 instance.prototype.CHOICES_TIMERNUMBER = [
 	{ label: '1', id: '1' },
