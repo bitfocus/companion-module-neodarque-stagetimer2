@@ -23,6 +23,7 @@ instance.prototype.init = function() {
 	self.init_tcp();
 	self.init_variables();
 	self.init_feedbacks();
+	self.init_presets();
 	debug = self.debug;
 	log = self.log;
 };
@@ -571,6 +572,40 @@ instance.prototype.action = function(action) {
 		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/time", [ h, m, s ] );
 
 	}
+};
+
+
+
+instance.prototype.init_presets = function () {
+	var self = this;
+	var presets = [];
+	for (var timernum = 1; timernum <= 2; timernum++) {
+
+		presets.push({
+			category: 'Current time',
+			label: 'Time button',
+			bank: {
+				style: 'text',
+				text: '$(timer:timer'+timernum+'_time)',
+				size: '18',
+				color: '16777215',
+				bgcolor: 0
+			},
+			feedbacks: [
+				{
+					type: 'timer_running',
+					options: {
+						bg: 65280,
+						fg: 16777215,
+						timer: timernum
+					}
+				}
+			],
+			actions: [
+			]
+		});
+	}
+	self.setPresetDefinitions(presets);
 };
 
 instance_skel.extendedBy(instance);
