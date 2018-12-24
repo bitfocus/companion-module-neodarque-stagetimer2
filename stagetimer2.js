@@ -17,6 +17,16 @@ function instance(system, id, config) {
 	return self;
 }
 
+instance.prototype.updateConfig = function(config) {
+	var self = this;
+
+	self.init_tcp();
+	self.config = config;
+	self.init_variables();
+	self.init_feedbacks();
+	self.init_presets();
+};
+
 instance.prototype.init = function() {
 	var self = this;
 	self.status(self.STATE_ERROR);
