@@ -215,6 +215,17 @@ instance.prototype.CHOICES_TIMERNUMBER = [
 	{ label: '2', id: '2' }
 ];
 
+instance.prototype.CHOICES_INDECREASE = [
+	{ label: 'increase', id: 'increase' },
+	{ label: 'decrease', id: 'decrease' }
+];
+
+instance.prototype.CHOICES_TIMETYPE = [
+	{ label: 'seconds', id: 'seconds' },
+	{ label: 'minutes', id: 'minutes' },
+	{ label: 'hours', id: 'hours' }
+];
+
 instance.prototype.actions = function(system) {
 	var self = this;
 	self.system.emit('instance_actions', self.id, {
@@ -254,7 +265,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'basic_enable': {
 			label: 'Enable timer',
 			options: [
@@ -267,7 +277,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'basic_disable': {
 			label: 'Disable timer',
 			options: [
@@ -280,7 +289,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'basic_next': {
 			label: 'Next timer',
 			options: [
@@ -293,7 +301,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'basic_previous': {
 			label: 'Previous timer',
 			options: [
@@ -306,7 +313,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'timer_index': {
 			label: 'Load timer',
 			options: [
@@ -325,7 +331,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'timer_set': {
 			label: 'Set timer time',
 			options: [
@@ -344,7 +349,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'timer_message': {
 			label: 'Set message',
 			options: [
@@ -356,20 +360,48 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-
 		'timer_message_clear': {
 			label: 'Clear message',
 			options: []
 		},
-
 		'fullscreen_enter': {
 			label: 'Enter fullscreen',
 			options: []
 		},
-
 		'fullscreen_leave': {
 			label: 'Leave fullscreen',
 			options: []
+		},
+		'timer_indecrease': {
+			label: 'Increase/Decrease timer',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Timer #',
+					id: 'timerNumber',
+					default: '1',
+					choices: self.CHOICES_TIMERNUMBER
+				},
+				{
+					type: 'dropdown',
+					label: 'increase/decrease',
+					id: 'timerInDecrease',
+					default: 'increase',
+					choices: self.CHOICES_INDECREASE
+				},
+				{
+					type: 'dropdown',
+					label: 'type',
+					id: 'timerTimeType',
+					default: 'minutes',
+					choices: self.CHOICES_TIMETYPE
+				},
+				{
+					type: 'textinput',
+					label: 'time',
+					id: 'timeTime'
+				}
+			]
 		}
 
 	});
@@ -580,6 +612,17 @@ instance.prototype.action = function(action) {
 		}
 
 		self.system.emit('osc_send', self.config.host, self.config.port, "/timer/" + action.options.timerNumber + "/entry/time", [ h, m, s ] );
+
+	}
+
+	else if (action.action == 'timer_indecrease') {
+
+		var bol = {
+				type: "i",
+				value: parseInt(action.options.timerTime)
+		};
+
+		self.system.emit('osc_send', self.config.host, self.config.port, '/timer/${action.options.timerNumber}/${action.options.timerTimeType}/${action.options.timerInDecrease}/', [ bol ] );
 
 	}
 };
