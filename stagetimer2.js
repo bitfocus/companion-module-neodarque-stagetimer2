@@ -621,8 +621,7 @@ instance.prototype.action = function(action) {
 				type: "i",
 				value: parseInt(action.options.timerTime)
 		};
-		console.log(`/timer/${action.options.timerNumber}/${action.options.timerTimeType}/${action.options.timerInDecrease}/`)
-		self.system.emit('osc_send', self.config.host, self.config.port, `/timer/${action.options.timerNumber}/${action.options.timerTimeType}/${action.options.timerInDecrease}/`, [ bol ] );
+		self.system.emit('osc_send', self.config.host, self.config.port, `/timer/${action.options.timerNumber}/${action.options.timerTimeType}/${action.options.timerInDecrease}`, [ bol ] );
 
 	}
 };
