@@ -1,6 +1,6 @@
-var tcp = require('../../tcp');
+var tcp           = require('../../tcp');
 var instance_skel = require('../../instance_skel');
-var parseString = require('xml2js').parseString;
+var parseString   = require('xml2js').parseString;
 var debug;
 var log;
 
@@ -123,9 +123,8 @@ instance.prototype.init_tcp = function() {
 		self.socket.on('data', function (data) {
 			if (data !== undefined && data.toString().match(/Timers/)) {
 				var xml = data.toString();
-				parseString(xml, function (err, result) {
+				parseString.parseStringPromise(xml).then(function (result) {
 					if (result !== undefined && result.Timers !== undefined && result.Timers.Timer !== undefined) {
-
 						var t = result.Timers.Timer;
 
 						var t1 = t[0]['$'];
@@ -177,7 +176,9 @@ instance.prototype.init_tcp = function() {
 						self.checkFeedbacks('timer_onovertime');
 
 					}
-
+				})
+				.catch(function (err) {
+					self.log('error',"Error during proccessing data",err)
 				});
 			}
 		});
