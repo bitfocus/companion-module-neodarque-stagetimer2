@@ -1,6 +1,6 @@
 var tcp           = require('../../tcp');
 var instance_skel = require('../../instance_skel');
-var parseString   = require('xml2js').parseString;
+var xml2js   = require('xml2js');
 var debug;
 var log;
 
@@ -123,7 +123,7 @@ instance.prototype.init_tcp = function() {
 		self.socket.on('data', function (data) {
 			if (data !== undefined && data.toString().match(/Timers/)) {
 				var xml = data.toString();
-				parseString.parseStringPromise(xml).then(function (result) {
+				xml2js.parseStringPromise(xml).then(function (result) {
 					if (result !== undefined && result.Timers !== undefined && result.Timers.Timer !== undefined) {
 						var t = result.Timers.Timer;
 
