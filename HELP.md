@@ -17,3 +17,5 @@ you need to select the timer X first.
 * Set time on time
 * Enter fullscreen
 * Exit fullscreen
+
+> Seems to be an error with full screen, the API command is being send correctly, we will need to wait for a new version of StageTimer2
