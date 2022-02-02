@@ -227,7 +227,7 @@ instance.prototype.CHOICES_TIMETYPE = [
 
 instance.prototype.actions = function (system) {
 	var self = this
-	self.system.emit('instance_actions', self.id, {
+	self.setActions({
 		basic_start: {
 			label: 'Start timer',
 			options: [
@@ -516,25 +516,24 @@ instance.prototype.action = function (action) {
 	var m
 
 	if (action.action === 'timer_message') {
-		self.system.emit('osc_send', self.config.host, self.config.port, '/message', [
+		self.oscSend(self.config.host, self.config.port, '/message', [
 			{
 				type: 's',
 				value: action.options.message,
 			},
 		])
 	} else if (action.action === 'timer_message_clear') {
-		self.system.emit('osc_send', self.config.host, self.config.port, '/message/clear', [])
+		self.oscSend(self.config.host, self.config.port, '/message/clear', [])
 	} else if (action.action === 'fullscreen_enter') {
 		debug('enter fullscreen')
-		self.system.emit('osc_send', self.config.host, self.config.port, '/fullscreen/enter', [])
+		self.oscSend(self.config.host, self.config.port, '/fullscreen/enter', [])
 	} else if (action.action === 'fullscreen_leave') {
 		debug('exit fullscreen')
-		self.system.emit('osc_send', self.config.host, self.config.port, '/fullscreen/exit', [])
+		self.oscSend(self.config.host, self.config.port, '/fullscreen/exit', [])
 	} else if ((m = action.action.match(/^basic_([a-z]+)$/))) {
 		for (var n in self.CHOICES_BASIC) {
 			if (self.CHOICES_BASIC[n].label === m[1]) {
-				self.system.emit(
-					'osc_send',
+				self.oscSend(
 					self.config.host,
 					self.config.port,
 					'/timer/' + action.options.timerNumber + '/' + self.CHOICES_BASIC[n].id,
@@ -548,8 +547,7 @@ instance.prototype.action = function (action) {
 			value: parseInt(action.options.timerIndex),
 		}
 
-		self.system.emit(
-			'osc_send',
+		self.oscSend(
 			self.config.host,
 			self.config.port,
 			'/timer/' + action.options.timerNumber + '/entry/index',
@@ -606,8 +604,7 @@ instance.prototype.action = function (action) {
 			}
 		}
 
-		self.system.emit(
-			'osc_send',
+		self.oscSend(
 			self.config.host,
 			self.config.port,
 			'/timer/' + action.options.timerNumber + '/entry/time',
@@ -618,8 +615,7 @@ instance.prototype.action = function (action) {
 			type: 'i',
 			value: parseInt(action.options.timerTime),
 		}
-		self.system.emit(
-			'osc_send',
+		self.oscSend(
 			self.config.host,
 			self.config.port,
 			`/timer/${action.options.timerNumber}/${action.options.timerTimeType}/${action.options.timerInDecrease}`,
