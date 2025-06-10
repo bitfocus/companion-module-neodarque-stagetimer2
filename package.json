@@ -1,32 +1,22 @@
 {
 	"name": "neodarque-stagetimer2",
-	"version": "1.2.8",
-	"keywords": [
-		"Timing",
-		"Clock"
-	],
-	"manufacturer": "Neodarque",
-	"product": [
-		"StageTimer2"
-	],
-	"shortname": "stagetimer",
-	"homepage": "https://github.com/bitfocus/companion-module-neodarque-stagetimer2#readme",
-	"description": "Companion module for StageTimer2",
-	"main": "stagetimer2.js",
+	"version": "2.0.0",
+	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"format": "prettier --write \"**/*.{js,json,md}\""
 	},
-	"author": "Jeffrey Davidsz <jeffrey.davidsz@vicreo.eu>",
 	"license": "MIT",
 	"dependencies": {
+		"@companion-module/base": "^1.12.1",
 		"xml2js": "^0.5.0"
-	},
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-neodarque-stagetimer2/issues"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-neodarque-stagetimer2.git"
 	},
-	"api_version": "1.0.0"
+	"devDependencies": {
+		"@companion-module/tools": "^2.3.0",
+		"prettier": "^3.5.3"
+	}
 }
