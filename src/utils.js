@@ -12,13 +12,17 @@ module.exports = {
 		}
 
 		if (self.config.port === undefined) {
-			self.config.port = 5321
+			self.config.port = 8001
+		}
+
+		if (self.config.port_display === undefined) {
+			self.config.port_display = 4870
 		}
 
 		if (self.config.host) {
 			self.log('info', `Opening connection to ${self.config.host}:${self.config.port_display}`)
 
-			self.socket = new TCPHelper(self.config.host, self.config.port)
+			self.socket = new TCPHelper(self.config.host, self.config.port_display)
 
 			self.socket.on('error', function (err) {
 				if (self.config.verbose) {
