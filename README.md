@@ -1,3 +1,3 @@
 # companion-module-neodarque-stagetimer2
 
-See HELP.md and LICENSE
+See [HELP.md](./companion/HELP.md) and [LICENSE](./LICENSE)
