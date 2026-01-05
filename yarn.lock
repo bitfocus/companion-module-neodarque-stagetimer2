@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@companion-module/base@^1.12.1":
-  version "1.12.1"
-  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.12.1.tgz#b65d2bbce9d14e62ad9f5dfac00e768c4f5906d4"
-  integrity sha512-4hKs1g6XE8QCBh/dHYUa1seDl0U84TbpS8QnD8P+mFqMe7TupqgRkfAmLf3Ai9Fw8P7tE2zlFurMG6Y9iyA6YA==
+"@companion-module/base@^1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.14.1.tgz#9a7b4299ae7541a107b9fd83e3f2af66d5f4e146"
+  integrity sha512-m6Gp1r8IJxh89zOB7jhVDdd4evmrNjuCsBDckEI0Nb/yP19gy18Wx1vRlyZFJshIhEMLgmNC1yqdwDgb+wYspw==
   dependencies:
     ajv "^8.17.1"
     colord "^2.9.3"
