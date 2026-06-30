@@ -17,6 +17,6 @@
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^2.7.1",
-		"prettier": "^3.9.1"
+		"prettier": "^3.9.4"
 	}
 }
